@@ -77,33 +77,18 @@ fi
 
 echo ""
 
-# Step 5: Create README
-echo "📝 Step 4: Creating README..."
-cat > dist-dmg/README.txt << 'EOF'
-AutoMate Installer v1.0.0
+# Step 5: Create launcher script (replaces README)
+echo "📝 Step 4: Creating direct launcher..."
 
-INSTALLATION:
-1. Drag "AutoMate Installer.app" to your Applications folder (or Desktop)
-2. Double-click to launch
-3. Follow the on-screen instructions
-4. Enter your Anthropic API key when prompted
-5. Wait ~10 minutes for installation
-6. Done! AutoChat will open automatically
+cat > dist-dmg/"Install AutoMate" << 'LAUNCHER'
+#!/bin/bash
+# Launch installer directly from DMG
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+open "$DIR/AutoMate Installer.app"
+LAUNCHER
+chmod +x dist-dmg/"Install AutoMate"
 
-REQUIREMENTS:
-- macOS 10.13 or later
-- 8GB RAM minimum
-- 5GB free disk space
-- Internet connection (for dependencies)
-
-SUPPORT:
-- GitHub: https://github.com/stevew00dy/automate-installer
-- Issues: https://github.com/stevew00dy/automate-installer/issues
-
-Made with ❤️ for the Mac community
-EOF
-
-echo "   ✅ README created"
+echo "   ✅ Launcher created (users just double-click 'Install AutoMate')"
 
 # Step 6: Copy icon for DMG
 echo ""
