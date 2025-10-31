@@ -105,16 +105,35 @@ EOF
 
 echo "   ✅ README created"
 
-# Step 6: Create DMG
+# Step 6: Copy icon for DMG
 echo ""
-echo "💿 Step 5: Creating DMG..."
+echo "🎨 Step 5: Adding icon to DMG contents..."
+cp assets/icon.icns dist-dmg/.VolumeIcon.icns
+echo "   ✅ Icon copied"
 
-# Simple DMG creation
+# Step 7: Create DMG
+echo ""
+echo "💿 Step 6: Creating DMG..."
+
+# Create writable DMG first
 hdiutil create -volname "$DMG_NAME" \
   -srcfolder dist-dmg \
   -ov \
-  -format UDZO \
-  "$DMG_NAME.dmg"
+  -format UDRW \
+  "$DMG_NAME-temp.dmg"
+
+# Mount it
+hdiutil attach "$DMG_NAME-temp.dmg" -mountpoint /tmp/automate-dmg-build -nobrowse
+
+# Set custom icon attribute
+SetFile -a C /tmp/automate-dmg-build
+
+# Unmount
+hdiutil detach /tmp/automate-dmg-build
+
+# Convert to compressed read-only
+hdiutil convert "$DMG_NAME-temp.dmg" -format UDZO -o "$DMG_NAME.dmg"
+rm "$DMG_NAME-temp.dmg"
 
 if [ $? -eq 0 ]; then
   echo ""
