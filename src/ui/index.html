@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AutoMate Installer</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+      background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 100%);
+      color: #e0e0e0;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      padding: 40px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .logo {
+      font-size: 48px;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      font-size: 32px;
+      font-weight: 600;
+      margin-bottom: 10px;
+      background: linear-gradient(90deg, #60a5fa, #a78bfa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      font-size: 16px;
+      color: #9ca3af;
+    }
+
+    .content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .screen {
+      display: none;
+      width: 100%;
+      max-width: 600px;
+      animation: fadeIn 0.3s;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 30px;
+      margin-bottom: 20px;
+    }
+
+    .feature-list {
+      list-style: none;
+      margin: 20px 0;
+    }
+
+    .feature-list li {
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+    }
+
+    .feature-list li:last-child {
+      border-bottom: none;
+    }
+
+    .feature-list li::before {
+      content: '✓';
+      color: #10b981;
+      font-weight: bold;
+      margin-right: 12px;
+      font-size: 18px;
+    }
+
+    .input-group {
+      margin-bottom: 24px;
+    }
+
+    .input-label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #9ca3af;
+    }
+
+    .input-description {
+      font-size: 12px;
+      color: #6b7280;
+      margin-bottom: 8px;
+    }
+
+    .input-link {
+      color: #60a5fa;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .input-link:hover {
+      text-decoration: underline;
+    }
+
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      color: #e0e0e0;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #60a5fa;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .button-group {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 30px;
+    }
+
+    button {
+      padding: 12px 32px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(90deg, #60a5fa, #a78bfa);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(96, 165, 250, 0.4);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.05);
+      color: #9ca3af;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: #e0e0e0;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 20px 0;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #60a5fa, #a78bfa);
+      transition: width 0.3s;
+      width: 0%;
+    }
+
+    .status-item {
+      padding: 12px;
+      margin: 8px 0;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .status-icon {
+      font-size: 20px;
+    }
+
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-top-color: #60a5fa;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .success-message {
+      text-align: center;
+      padding: 20px;
+    }
+
+    .success-icon {
+      font-size: 64px;
+      margin-bottom: 20px;
+    }
+
+    .service-list {
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 8px;
+      padding: 16px;
+      margin: 20px 0;
+    }
+
+    .service-item {
+      padding: 8px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .url {
+      color: #60a5fa;
+      text-decoration: none;
+      font-family: 'Monaco', monospace;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="logo">🤖</div>
+      <h1>AutoMate Installer</h1>
+      <p class="subtitle">Your AI Automation Hub</p>
+    </div>
+
+    <div class="content">
+      <!-- Welcome Screen -->
+      <div class="screen active" id="welcome-screen">
+        <div class="card">
+          <h2 style="margin-bottom: 20px;">Welcome to AutoMate</h2>
+          <p style="margin-bottom: 20px; color: #9ca3af;">
+            This installer will set up your complete AI automation environment in about 10 minutes.
+          </p>
+          <ul class="feature-list">
+            <li>AutoChat - AI Chat Interface</li>
+            <li>AutoHub - Multi-channel Engine</li>
+            <li>AutoMem - Semantic Memory</li>
+            <li>Docker + Databases</li>
+          </ul>
+        </div>
+        <div class="button-group">
+          <button class="btn-primary" onclick="goToScreen('system-check')">Get Started</button>
+        </div>
+      </div>
+
+      <!-- System Check Screen -->
+      <div class="screen" id="system-check-screen">
+        <div class="card">
+          <h2 style="margin-bottom: 20px;">Checking Your System</h2>
+          <div id="system-status"></div>
+        </div>
+        <div class="button-group">
+          <button class="btn-secondary" onclick="goToScreen('welcome')">Back</button>
+          <button class="btn-primary" id="continue-from-check" onclick="goToScreen('api-keys')" disabled>Continue</button>
+        </div>
+      </div>
+
+      <!-- API Keys Screen -->
+      <div class="screen" id="api-keys-screen">
+        <div class="card">
+          <h2 style="margin-bottom: 20px;">API Keys Setup</h2>
+          
+          <div class="input-group">
+            <label class="input-label">Anthropic API Key (Required)</label>
+            <p class="input-description">
+              Powers your Claude AI assistant. 
+              <a class="input-link" onclick="openUrl('https://console.anthropic.com')">Get your key →</a>
+            </p>
+            <input type="password" id="anthropic-key" placeholder="sk-ant-...">
+            <button class="btn-secondary" style="margin-top: 8px; padding: 8px 16px; font-size: 12px;" onclick="testKey('anthropic')">Test Key</button>
+          </div>
+
+          <div class="input-group">
+            <label class="input-label">OpenAI API Key (Optional)</label>
+            <p class="input-description">
+              For embeddings and alternate models. 
+              <a class="input-link" onclick="openUrl('https://platform.openai.com')">Get your key →</a>
+            </p>
+            <input type="password" id="openai-key" placeholder="sk-...">
+            <div class="checkbox-group">
+              <input type="checkbox" id="skip-openai">
+              <label for="skip-openai" style="font-size: 12px; color: #9ca3af;">Skip (use free alternatives)</label>
+            </div>
+          </div>
+        </div>
+        <div class="button-group">
+          <button class="btn-secondary" onclick="goToScreen('system-check')">Back</button>
+          <button class="btn-primary" id="continue-from-keys" onclick="startInstallation()" disabled>Install</button>
+        </div>
+      </div>
+
+      <!-- Installation Screen -->
+      <div class="screen" id="installation-screen">
+        <div class="card">
+          <h2 style="margin-bottom: 20px;">Installing AutoMate</h2>
+          <div class="progress-bar">
+            <div class="progress-fill" id="progress"></div>
+          </div>
+          <p style="text-align: center; margin-bottom: 20px; color: #9ca3af;" id="current-step">Preparing...</p>
+          <div id="installation-status"></div>
+        </div>
+      </div>
+
+      <!-- Success Screen -->
+      <div class="screen" id="success-screen">
+        <div class="success-message">
+          <div class="success-icon">🎉</div>
+          <h2 style="margin-bottom: 20px;">AutoMate is Ready!</h2>
+          <p style="color: #9ca3af; margin-bottom: 20px;">Your AI automation hub is installed and running.</p>
+          
+          <div class="service-list">
+            <div class="service-item">
+              <span>AutoChat UI</span>
+              <a class="url" onclick="openUrl('http://localhost:3000')">http://localhost:3000</a>
+            </div>
+            <div class="service-item">
+              <span>AutoHub API</span>
+              <a class="url" onclick="openUrl('http://localhost:3001')">http://localhost:3001</a>
+            </div>
+            <div class="service-item">
+              <span>AutoMem API</span>
+              <a class="url" onclick="openUrl('http://localhost:8001')">http://localhost:8001</a>
+            </div>
+          </div>
+
+          <div class="button-group">
+            <button class="btn-primary" onclick="openUrl('http://localhost:3000')">Open AutoChat</button>
+            <button class="btn-secondary" onclick="window.close()">Done</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
+
