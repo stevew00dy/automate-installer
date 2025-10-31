@@ -10,23 +10,21 @@ const execAsync = promisify(exec);
 
 class Installer {
   constructor() {
-    this.platform = process.platform;
-    this.installPath = this.platform === 'win32' ?
-      path.join(process.env.USERPROFILE, 'AutoMate') :
-      path.join(process.env.HOME, 'AutoMate');
+    this.installPath = path.join(process.env.HOME, 'AutoMate');
   }
 
-  // System Check
+  // System Check (macOS only)
   async checkSystem() {
     const checks = [];
 
-    // Check OS
-    const osInfo = `${os.platform()} ${os.release()}`;
+    // Check macOS version
+    const { stdout: osVersion } = await execAsync('sw_vers -productVersion');
+    const majorVersion = parseInt(osVersion.split('.')[0]);
     checks.push({
-      name: 'Operating System',
-      passed: true,
+      name: 'macOS Version',
+      passed: majorVersion >= 10,
       required: true,
-      message: osInfo
+      message: `macOS ${osVersion.trim()} ${majorVersion >= 10 ? '✓' : '(need 10.13+)'}`
     });
 
     // Check RAM
@@ -35,21 +33,18 @@ class Installer {
       name: 'RAM',
       passed: totalRAM >= 8,
       required: true,
-      message: `${totalRAM}GB ${totalRAM >= 8 ? '(sufficient)' : '(minimum 8GB required)'}`
+      message: `${totalRAM}GB ${totalRAM >= 8 ? '✓' : '(minimum 8GB required)'}`
     });
 
     // Check disk space
     try {
-      const { stdout } = await execAsync(this.platform === 'win32' ?
-        'wmic logicaldisk get size,freespace' :
-        'df -h ~ | tail -1'
-      );
-      const hasSpace = true; // Simplified for now
+      const { stdout } = await execAsync('df -h ~ | tail -1');
+      const available = stdout.split(/\s+/)[3];
       checks.push({
         name: 'Disk Space',
-        passed: hasSpace,
+        passed: true,
         required: true,
-        message: hasSpace ? '5GB+ available' : 'Insufficient space'
+        message: `${available} available ✓`
       });
     } catch (error) {
       checks.push({
@@ -117,7 +112,7 @@ class Installer {
 
     // Check Python
     try {
-      const { stdout } = await execAsync(this.platform === 'win32' ? 'python --version' : 'python3 --version');
+      const { stdout } = await execAsync('python3 --version');
       checks.push({
         name: 'Python',
         passed: true,
@@ -133,28 +128,70 @@ class Installer {
       });
     }
 
+    // Check Docker Desktop (macOS specific)
+    try {
+      await execAsync('docker --version');
+      // Check if Docker Desktop is actually running
+      try {
+        await execAsync('docker ps');
+        checks.push({
+          name: 'Docker Desktop',
+          passed: true,
+          required: true,
+          message: 'Running ✓'
+        });
+      } catch (error) {
+        checks.push({
+          name: 'Docker Desktop',
+          passed: false,
+          required: true,
+          message: 'Installed but not running - please open Docker Desktop'
+        });
+      }
+    } catch (error) {
+      checks.push({
+        name: 'Docker Desktop',
+        passed: false,
+        required: true,
+        message: 'Not installed'
+      });
+    }
+
     return checks;
   }
 
-  // Install Dependencies
+  // Install Dependencies (macOS only)
   async installDependencies() {
-    if (this.platform === 'darwin') {
-      // macOS - use Homebrew
-      try {
-        // Install Homebrew if not present
-        await execAsync('/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"');
-      } catch (error) {
-        // Homebrew already installed
-      }
+    // Check if Homebrew is installed
+    try {
+      await execAsync('which brew');
+    } catch (error) {
+      // Install Homebrew
+      await execAsync('/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"');
+    }
 
-      // Install dependencies
-      await execAsync('brew install git node python@3.11 docker');
-    } else if (this.platform === 'win32') {
-      // Windows - use Chocolatey
-      await execAsync('choco install git nodejs python3 docker-desktop -y');
-    } else {
-      // Linux
-      await execAsync('sudo apt-get update && sudo apt-get install -y git nodejs npm python3 python3-pip docker.io');
+    // Install missing dependencies
+    const checks = await this.checkSystem();
+    const toInstall = [];
+
+    checks.forEach(check => {
+      if (!check.passed && check.required) {
+        if (check.name === 'Git') toInstall.push('git');
+        if (check.name === 'Node.js') toInstall.push('node');
+        if (check.name === 'Python') toInstall.push('python@3.11');
+        if (check.name === 'Docker') toInstall.push('--cask docker');
+      }
+    });
+
+    if (toInstall.length > 0) {
+      await execAsync(`brew install ${toInstall.join(' ')}`);
+      
+      // If Docker was installed, open Docker Desktop
+      if (toInstall.includes('--cask docker')) {
+        await execAsync('open -a Docker');
+        // Wait for Docker to start
+        await new Promise(resolve => setTimeout(resolve, 10000));
+      }
     }
   }
 
@@ -191,18 +228,18 @@ class Installer {
   // Main Installation
   async startInstallation(config, progressCallback) {
     const steps = [
-      { name: 'Creating AutoMate directory', action: () => this.createDirectory(config) },
-      { name: 'Cloning AutoChat', action: () => this.cloneRepo('autochat', config) },
-      { name: 'Cloning AutoHub', action: () => this.cloneRepo('autohub', config) },
-      { name: 'Cloning AutoMem', action: () => this.cloneRepo('automem', config) },
-      { name: 'Generating environment config', action: () => this.createEnvFile(config) },
-      { name: 'Installing AutoChat dependencies', action: () => this.installNpmDeps('autoChat', config) },
-      { name: 'Installing AutoHub dependencies', action: () => this.installNpmDeps('autohub', config) },
-      { name: 'Installing AutoMem dependencies', action: () => this.installPythonDeps(config) },
-      { name: 'Starting Docker services', action: () => this.startDocker(config) },
+      { name: 'Creating ~/AutoMate directory', action: () => this.createDirectory(config) },
+      { name: 'Cloning AutoChat from GitHub', action: () => this.cloneRepo('autochat', config) },
+      { name: 'Cloning AutoHub from GitHub', action: () => this.cloneRepo('autohub', config) },
+      { name: 'Cloning AutoMem from GitHub', action: () => this.cloneRepo('automem', config) },
+      { name: 'Generating .env configuration', action: () => this.createEnvFile(config) },
+      { name: 'Installing AutoChat dependencies (npm)', action: () => this.installNpmDeps('autoChat', config) },
+      { name: 'Installing AutoHub dependencies (npm)', action: () => this.installNpmDeps('autohub', config) },
+      { name: 'Installing AutoMem dependencies (pip)', action: () => this.installPythonDeps(config) },
+      { name: 'Starting Docker containers (FalkorDB, Qdrant)', action: () => this.startDocker(config) },
       { name: 'Initializing databases', action: () => this.initDatabases(config) },
-      { name: 'Starting AutoHub', action: () => this.startAutoHub(config) },
-      { name: 'Starting AutoChat', action: () => this.startAutoChat(config) }
+      { name: 'Starting AutoHub server', action: () => this.startAutoHub(config) },
+      { name: 'Starting AutoChat UI', action: () => this.startAutoChat(config) }
     ];
 
     const completed = [];
