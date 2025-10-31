@@ -343,10 +343,14 @@
               For embeddings and alternate models. 
               <a class="input-link" onclick="openUrl('https://platform.openai.com')">Get your key →</a>
             </p>
-            <input type="password" id="openai-key" placeholder="sk-...">
-            <div class="checkbox-group">
-              <input type="checkbox" id="skip-openai">
-              <label for="skip-openai" style="font-size: 12px; color: #9ca3af;">Skip (use free alternatives)</label>
+            <input type="password" id="openai-key" placeholder="sk-..." style="margin-bottom: 12px;">
+            
+            <!-- Better Skip Button -->
+            <button class="btn-secondary" id="skip-openai-btn" onclick="skipOpenAI()" style="width: 100%; padding: 10px; font-size: 13px;">
+              ⏭️ Skip OpenAI (use free alternatives)
+            </button>
+            <div id="openai-skipped" style="display: none; padding: 10px; margin-top: 8px; background: rgba(16, 185, 129, 0.1); border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.3);">
+              <span style="color: #10b981; font-size: 13px;">✓ OpenAI skipped - will use free alternatives</span>
             </div>
           </div>
         </div>

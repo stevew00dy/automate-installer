@@ -124,13 +124,32 @@ async function testKey(provider) {
 }
 
 // Check if OpenAI is skipped
-document.getElementById('skip-openai')?.addEventListener('change', (e) => {
-  const input = document.getElementById('openai-key');
-  input.disabled = e.target.checked;
-  if (e.target.checked) {
-    apiKeys.openai = 'SKIP';
+function skipOpenAI() {
+  apiKeys.openai = 'SKIP';
+  
+  // Show confirmation
+  document.getElementById('openai-skipped').style.display = 'block';
+  document.getElementById('skip-openai-btn').textContent = '✓ Skipped';
+  document.getElementById('skip-openai-btn').style.background = '#10b981';
+  document.getElementById('skip-openai-btn').style.color = 'white';
+  document.getElementById('openai-key').disabled = true;
+  document.getElementById('openai-key').style.opacity = '0.5';
+  
+  // Enable install button if Anthropic key is present
+  if (apiKeys.anthropic) {
+    document.getElementById('continue-from-keys').disabled = false;
+  }
+}
+
+// Auto-enable continue button on Anthropic key input
+document.getElementById('anthropic-key')?.addEventListener('input', (e) => {
+  const continueBtn = document.getElementById('continue-from-keys');
+  // Enable if there's a key (they can install without testing, but key is required)
+  if (e.target.value.trim()) {
+    apiKeys.anthropic = e.target.value.trim();
+    continueBtn.disabled = false;
   } else {
-    apiKeys.openai = null;
+    continueBtn.disabled = true;
   }
 });
 
@@ -141,9 +160,7 @@ async function startInstallation() {
   const config = {
     anthropicKey: apiKeys.anthropic,
     openaiKey: apiKeys.openai === 'SKIP' ? null : apiKeys.openai,
-    installPath: process.platform === 'win32' ? 
-      `${process.env.USERPROFILE}\\AutoMate` : 
-      `${process.env.HOME}/AutoMate`
+    installPath: `${process.env.HOME}/AutoMate`
   };
 
   // Listen for progress updates
@@ -185,16 +202,3 @@ function updateProgress(progress) {
 async function openUrl(url) {
   await ipcRenderer.invoke('open-url', url);
 }
-
-// Auto-enable continue button on Anthropic key input
-document.getElementById('anthropic-key')?.addEventListener('input', (e) => {
-  const continueBtn = document.getElementById('continue-from-keys');
-  // Enable if there's a key (they can install without testing, but key is required)
-  if (e.target.value.trim()) {
-    apiKeys.anthropic = e.target.value.trim();
-    continueBtn.disabled = false;
-  } else {
-    continueBtn.disabled = true;
-  }
-});
-
