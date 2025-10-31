@@ -283,7 +283,36 @@ class Installer {
     };
 
     const repoPath = path.join(config.installPath, repo);
-    await execAsync(`git clone ${repos[repo]} ${repoPath}`);
+    
+    // Check if repo is bundled in the app
+    const bundledPath = path.join(__dirname, '../../bundled-repos', repo);
+    
+    try {
+      await fs.access(bundledPath);
+      // Bundled repo exists - copy it instead of cloning
+      console.log(`Using bundled ${repo}...`);
+      await this.copyDir(bundledPath, repoPath);
+    } catch (error) {
+      // Not bundled - clone from GitHub
+      console.log(`Cloning ${repo} from GitHub...`);
+      await execAsync(`git clone ${repos[repo]} ${repoPath}`);
+    }
+  }
+
+  async copyDir(src, dest) {
+    await fs.mkdir(dest, { recursive: true });
+    const entries = await fs.readdir(src, { withFileTypes: true });
+
+    for (const entry of entries) {
+      const srcPath = path.join(src, entry.name);
+      const destPath = path.join(dest, entry.name);
+
+      if (entry.isDirectory()) {
+        await this.copyDir(srcPath, destPath);
+      } else {
+        await fs.copyFile(srcPath, destPath);
+      }
+    }
   }
 
   async createEnvFile(config) {

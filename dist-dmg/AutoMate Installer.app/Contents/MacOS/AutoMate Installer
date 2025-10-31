@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# Open Terminal and run the installer
+osascript << 'APPLESCRIPT'
+tell application "Terminal"
+    activate
+    do script "cd /Users/stevewoody/automate-installer && echo '🚀 Launching AutoMate Installer...' && echo '' && if [ ! -d 'node_modules' ]; then echo '📦 First launch - installing dependencies (2-3 minutes)...'; npm install; fi && echo '' && echo '✅ Starting installer...' && echo '' && npm start"
+end tell
+APPLESCRIPT
