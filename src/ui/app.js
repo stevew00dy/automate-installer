@@ -135,21 +135,36 @@ function skipOpenAI() {
   document.getElementById('openai-key').disabled = true;
   document.getElementById('openai-key').style.opacity = '0.5';
   
-  // Enable install button if Anthropic key is present
-  if (apiKeys.anthropic) {
-    document.getElementById('continue-from-keys').disabled = false;
-  }
+  // Always enable install button (Anthropic is now optional too)
+  document.getElementById('continue-from-keys').disabled = false;
 }
 
-// Auto-enable continue button on Anthropic key input
+// Skip Anthropic (allow install without API key)
+function skipAnthropic() {
+  apiKeys.anthropic = 'SKIP';
+  
+  // Show warning
+  document.getElementById('anthropic-skipped').style.display = 'block';
+  document.getElementById('skip-anthropic-btn').textContent = '✓ Skipped';
+  document.getElementById('skip-anthropic-btn').style.background = '#fbbf24';
+  document.getElementById('skip-anthropic-btn').style.color = 'white';
+  document.getElementById('anthropic-key').disabled = true;
+  document.getElementById('anthropic-key').style.opacity = '0.5';
+  
+  // Enable install button
+  document.getElementById('continue-from-keys').disabled = false;
+}
+
+// Auto-enable continue button on Anthropic key input OR enable by default
+document.addEventListener('DOMContentLoaded', () => {
+  // Enable install button by default (keys are optional)
+  document.getElementById('continue-from-keys').disabled = false;
+});
+
 document.getElementById('anthropic-key')?.addEventListener('input', (e) => {
-  const continueBtn = document.getElementById('continue-from-keys');
-  // Enable if there's a key (they can install without testing, but key is required)
+  // Just update the key, button is already enabled
   if (e.target.value.trim()) {
     apiKeys.anthropic = e.target.value.trim();
-    continueBtn.disabled = false;
-  } else {
-    continueBtn.disabled = true;
   }
 });
 

@@ -328,13 +328,23 @@
           <h2 style="margin-bottom: 20px;">API Keys Setup</h2>
           
           <div class="input-group">
-            <label class="input-label">Anthropic API Key (Required)</label>
+            <label class="input-label">Anthropic API Key (Optional - can add later)</label>
             <p class="input-description">
               Powers your Claude AI assistant. 
               <a class="input-link" onclick="openUrl('https://console.anthropic.com')">Get your key →</a>
             </p>
-            <input type="password" id="anthropic-key" placeholder="sk-ant-...">
-            <button class="btn-secondary" style="margin-top: 8px; padding: 8px 16px; font-size: 12px;" onclick="testKey('anthropic')">Test Key</button>
+            <input type="password" id="anthropic-key" placeholder="sk-ant-..." style="margin-bottom: 12px;">
+            
+            <button class="btn-secondary" style="padding: 8px 16px; font-size: 12px; margin-right: 8px;" onclick="testKey('anthropic')">Test Key</button>
+            
+            <!-- Skip Anthropic Button -->
+            <button class="btn-secondary" id="skip-anthropic-btn" onclick="skipAnthropic()" style="padding: 8px 16px; font-size: 12px;">
+              ⏭️ Skip (add key later)
+            </button>
+            
+            <div id="anthropic-skipped" style="display: none; padding: 10px; margin-top: 8px; background: rgba(251, 191, 36, 0.1); border-radius: 8px; border: 1px solid rgba(251, 191, 36, 0.3);">
+              <span style="color: #fbbf24; font-size: 13px;">⚠️ Skipped - AutoMate will install but won't work until you add API key to .env file</span>
+            </div>
           </div>
 
           <div class="input-group">
