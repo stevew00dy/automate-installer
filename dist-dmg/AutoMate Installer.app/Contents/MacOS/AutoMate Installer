@@ -1,0 +1,6 @@
+#!/bin/bash
+cd /Users/stevewoody/automate-installer
+if [ ! -d "node_modules" ]; then
+    npm install --silent
+fi
+npm start
